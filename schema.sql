@@ -36,3 +36,8 @@ alter table public.planner_docs replica identity full;
 alter table public.fin_inbox    replica identity full;
 alter publication supabase_realtime add table public.planner_docs;
 alter publication supabase_realtime add table public.fin_inbox;
+
+-- 5. Permisos para usuarios con sesión iniciada (las políticas RLS limitan a sus propias filas)
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.planner_docs to authenticated;
+grant select, insert, update, delete on public.fin_inbox    to authenticated;
