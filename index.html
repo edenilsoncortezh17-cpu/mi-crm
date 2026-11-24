@@ -180,6 +180,12 @@ body[data-v=gym]::before{background:radial-gradient(90% 100% at 50% 100%,rgba(24
 .fd{font-size:12.5px;text-align:right;white-space:nowrap}
 .frow.c{grid-template-columns:minmax(0,1fr) 100px 100px}.frow.c .fbar{grid-column:1/-1;order:5}.frow.c .fd{grid-column:1/-1;text-align:left;order:6}
 .fhead{color:var(--mut);font-size:12.5px;border-bottom:1px solid var(--ln);padding-bottom:6px}
+.ftot{border-top:2px solid var(--ln2);border-bottom:0;padding-top:12px;font-weight:600}
+.ftot .fr{font-size:15px}.ftot .pl{text-align:right;font-variant-numeric:tabular-nums;color:#cfd3da;padding-right:10px;white-space:nowrap}
+.rs{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rs th{color:var(--mut);font-weight:500;font-size:12.5px;text-align:right;padding:0 0 8px}.rs th:first-child{text-align:left}
+.rs td{padding:10px 0;border-top:1px solid var(--ln);text-align:right;white-space:nowrap}.rs td:first-child{text-align:left;color:#cfd3da}
+.rs tr.bl td{border-top:2px solid var(--ln2);font-weight:600;font-size:15px}
 .yr{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;height:180px;align-items:end;margin-top:12px}
 .ym{display:grid;grid-template-rows:1fr auto;height:100%;gap:6px;text-align:center;font-size:11.5px;color:var(--mut)}
 .yb{position:relative;display:flex;gap:3px;align-items:flex-end;justify-content:center}
@@ -646,6 +652,8 @@ function vFin(){
   return `<div class="frow${cmp?' c':''}"><div>${esc(c.name)}</div><label class="box" aria-label="Previsto ${esc(c.name)}"><input inputmode="decimal" data-k="${fk}" data-f="plan.${esc(c.id)}" value="${esc(F.plan[c.id]??'')}" placeholder="0"></label><div class="fr">${money(rl)}</div><div class="fbar"><em class="${over?'over':inc?'inc':''}" style="width:${w}%"></em>${p?'<i style="left:80%"></i>':''}</div><div class="fd ${p||rl?(d>=0?'pos':'neg'):''}">${!p&&!rl?'—':inc?(d>=0?'+':'−')+money(Math.abs(d)):d>=0?'Quedan '+money(d):'Excedido '+money(-d)}</div></div>`};
  const head=`<div class="frow fhead"><div>Categoría</div><div style="text-align:right">Previsto</div><div style="text-align:right">Real</div><div>Real vs previsto (línea = 100%)</div><div style="text-align:right">Diferencia</div></div>`;
  const unc=F.tx.filter(t=>!t.cat).reduce((a,t)=>a+num(t.amount),0);
+ const tot=inc=>{const p=inc?S.PI:S.PG,rl=inc?S.RI:S.RG,d=inc?rl-p:p-rl,over=!inc&&p>0&&rl>p,w=p?Math.min(rl/p,1.25)*80:(rl?80:0);return `<div class="frow ftot${inc?' c':''}"><div>Total ${inc?'ingresos':'gastos'}</div><div class="pl">${money(p)}</div><div class="fr">${money(rl)}</div><div class="fbar"><em class="${over?'over':inc?'inc':''}" style="width:${w}%"></em>${p?'<i style="left:80%"></i>':''}</div><div class="fd ${p||rl?(d>=0?'pos':'neg'):''}">${!p&&!rl?'—':inc?(d>=0?'+':'−')+money(Math.abs(d))+(d>=0?' sobre lo previsto':' por debajo'):d>=0?'Quedan '+money(d):'Excedido '+money(-d)}</div></div>`};
+ const dif=(a,b,inc)=>{const d=a-b,good=inc?d>=0:d<=0;return `<span class="${d===0?'':good?'pos':'neg'}">${d>0?'+':d<0?'−':''}${money(Math.abs(d))}</span>`};
  // year
  const ys=Array.from({length:12},(_,i)=>finSum(`${y}-${pad(i+1)}`)),mx=Math.max(1,...ys.flatMap(o=>[o.PI,o.PG,o.RI,o.RG]));
  const yr=ys.map((o,i)=>`<div class="ym${i+1===mo?' cur':''}"><div class="yb" title="${cap(MES[i])}: ingresos ${money(o.RI)} de ${money(o.PI)} · gastos ${money(o.RG)} de ${money(o.PG)}"><span><i class="p" style="height:${o.PI/mx*100}%"></i><i class="r ri" style="height:${o.RI/mx*100}%"></i></span><span><i class="p" style="height:${o.PG/mx*100}%"></i><i class="r rg" style="height:${o.RG/mx*100}%"></i></span></div>${MES[i].slice(0,3)}</div>`).join('');
@@ -662,9 +670,10 @@ function vFin(){
  <div class="kpis fkpi">${kpi('Ingresos reales',`${money(S.RI)}<small>de ${money(S.PI)} previstos</small>`,pc(S.RI,S.PI))}${kpi('Gastos reales',`${money(S.RG)}<small>de ${money(S.PG)} previstos</small>`,Math.min(100,pc(S.RG,S.PG)))}${kpi('Balance real',`<span class="${bal>=0?'pos':'neg'}">${money(bal)}</span><small>previsto ${money(pb)}</small>`,null)}${kpi('Desviación de gastos',`<span class="${S.RG<=S.PG?'pos':'neg'}">${S.PG?(S.RG<=S.PG?'−':'+')+Math.abs(pc(S.RG-S.PG,S.PG))+'%':'—'}</span><small>${S.PG?(S.RG<=S.PG?'por debajo del plan':'por encima del plan'):'define tu presupuesto'}</small>`,null)}</div>
  <section class="card"><div class="ch"><h2>Pronóstico vs realidad · ${y}</h2><div class="lg"><span><i style="background:#3ddc97"></i>Ingresos reales</span><span><i style="background:var(--b)"></i>Gastos reales</span><span><i style="border:1.5px dashed rgba(255,255,255,.5)"></i>Previsto</span></div></div><div class="yr">${yr}</div></section>
  <div class="gm" style="margin-top:14px">
-  <section class="card"><div class="ch"><h2>Gastos por categoría</h2><button class="btn g" data-fincopy="1" style="height:36px">Copiar previsto del mes anterior</button></div>${head}${C.filter(c=>c.t==='g').map(c=>row(c)).join('')}${unc?`<p class="sub" style="margin-top:10px">${money(unc)} sin categoría en movimientos.</p>`:''}</section>
+  <section class="card"><div class="ch"><h2>Gastos por categoría</h2><button class="btn g" data-fincopy="1" style="height:36px">Copiar previsto del mes anterior</button></div>${head}${C.filter(c=>c.t==='g').map(c=>row(c)).join('')}${unc?`<p class="sub" style="margin-top:10px">${money(unc)} sin categoría en movimientos (incluidos en el total).</p>`:''}${tot(0)}</section>
   <div class="col">
-   <section class="card"><div class="ch"><h2>Ingresos</h2></div>${C.filter(c=>c.t==='i').map(c=>row(c,1)).join('')}</section>
+   <section class="card"><div class="ch"><h2>Ingresos</h2></div>${C.filter(c=>c.t==='i').map(c=>row(c,1)).join('')}${tot(1)}</section>
+   <section class="card"><div class="ch"><h2>Resumen del mes</h2><span>Previsto vs real</span></div><table class="rs"><thead><tr><th></th><th>Previsto</th><th>Real</th><th>Diferencia</th></tr></thead><tbody><tr><td>Ingresos</td><td>${money(S.PI)}</td><td>${money(S.RI)}</td><td>${dif(S.RI,S.PI,1)}</td></tr><tr><td>Gastos</td><td>${money(S.PG)}</td><td>${money(S.RG)}</td><td>${dif(S.RG,S.PG,0)}</td></tr><tr class="bl"><td>Balance</td><td>${money(S.PI-S.PG)}</td><td>${money(S.RI-S.RG)}</td><td>${dif(S.RI-S.RG,S.PI-S.PG,1)}</td></tr></tbody></table><p class="sub" style="margin:10px 0 0;font-size:12.5px">En gastos, verde = gastaste menos de lo previsto. En ingresos y balance, verde = mejor de lo previsto.</p></section>
    <section class="card"><div class="ch"><h2>Bot de Gmail</h2><span>${col?'Listo para recibir cobros':'Necesita iniciar sesión'}</span></div><p class="sub" style="margin:0">Cuando Gmail esté conectado, un bot revisará tus correos de cobros y los dejará arriba en “Por clasificar”. Solo eliges la categoría con un toque.</p></section>
   </div>
  </div>
